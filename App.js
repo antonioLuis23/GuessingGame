@@ -1,20 +1,46 @@
 import StartGameScreen from "./screens/StartGameScreen";
 import { StyleSheet, ImageBackground, SafeAreaView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import * as Font from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+
 import GameScreen from "./screens/GameScreen";
 import Colors from "./constants/colors";
 import GameOverScreen from "./screens/GameOverScreen";
+import { useState, useEffect } from "react";
+
+SplashScreen.preventAutoHideAsync();
 export default function App() {
   const [userNumber, setUserNumber] = useState(null);
   const [gameIsOver, setGameIsOver] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [guessRounds, setGuessRounds] = useState(0);
+
+  const loadFonts = async () => {
+    await Font.loadAsync({
+      "open-sans": require("./assets/fonts/OpenSans-Regular.ttf"),
+      "open-sans-bold": require("./assets/fonts/OpenSans-Bold.ttf"),
+    });
+    setAppIsReady(true);
+    SplashScreen.hideAsync();
+  };
+  useEffect(() => {
+    loadFonts();
+  }, []);
+
   const pickedNumberHandler = (pickedNumber) => {
     setUserNumber(pickedNumber);
     setGameIsOver(false);
   };
 
-  const gameOverHandler = () => {
+  const gameOverHandler = (numberOfRounds) => {
     setGameIsOver(true);
+    setGuessRounds(numberOfRounds);
+  };
+
+  const startNewGameHandler = () => {
+    setGuessRounds(0);
+    setUserNumber(null);
   };
 
   let screen = <StartGameScreen onPickNumber={pickedNumberHandler} />;
@@ -24,7 +50,16 @@ export default function App() {
     );
   }
   if (gameIsOver && userNumber) {
-    screen = <GameOverScreen />;
+    screen = (
+      <GameOverScreen
+        userNumber={userNumber}
+        roundsNumber={guessRounds}
+        onStartNewGame={startNewGameHandler}
+      />
+    );
+  }
+  if (!appIsReady) {
+    return null;
   }
 
   return (
